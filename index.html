@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Restock Priority System</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(51, 65, 85, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.5);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.8);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950">
+
+    <!-- OS Window Container -->
+    <div class="w-full max-w-6xl glass-panel rounded-2xl shadow-2xl overflow-hidden flex flex-col min-h-[85vh] border border-slate-800">
+        
+        <!-- Window Title Bar -->
+        <div class="bg-slate-900/90 px-4 py-3 border-b border-slate-800 flex items-center justify-between select-none">
+            <div class="flex items-center space-x-2">
+                <div class="w-3 h-3 rounded-full bg-rose-500 hover:opacity-80 transition cursor-pointer"></div>
+                <div class="w-3 h-3 rounded-full bg-amber-500 hover:opacity-80 transition cursor-pointer"></div>
+                <div class="w-3 h-3 rounded-full bg-emerald-500 hover:opacity-80 transition cursor-pointer"></div>
+                <span class="ml-3 text-xs font-semibold tracking-wider text-slate-400 uppercase">Inventory Restock Priority System v1.0</span>
+            </div>
+            <div class="flex items-center space-x-2 text-xs text-slate-400">
+                <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700/50">C++ Logic GUI Bridge</span>
+            </div>
+        </div>
+
+        <!-- App Body Layout -->
+        <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-4 md:p-6">
+            
+            <!-- Left Panel: Input & Control Center (4 Cols) -->
+            <div class="lg:col-span-4 flex flex-col gap-6">
+                
+                <!-- Add New Item Card -->
+                <div class="glass-card rounded-xl p-5 border border-slate-700/40">
+                    <div class="flex items-center space-x-2 mb-4 text-emerald-400">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                        <h2 class="font-semibold text-white">Add New Product</h2>
+                    </div>
+                    
+                    <form id="addItemForm" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1">Item Name</label>
+                            <input type="text" id="itemName" required placeholder="e.g. Coffee Beans" 
+                                class="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">Current Stock</label>
+                                <input type="number" id="currentStock" min="0" step="0.1" required placeholder="15" 
+                                    class="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-400 mb-1">Daily Sales Rate</label>
+                                <input type="number" id="salesRate" min="0.01" step="0.1" required placeholder="2.5" 
+                                    class="w-full bg-slate-900/80 border border-slate-700/60 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition">
+                            </div>
+                        </div>
+
+                        <button type="submit" 
+                            class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-medium py-2.5 rounded-lg text-sm transition flex items-center justify-center space-x-2 shadow-lg shadow-emerald-900/20">
+                            <i data-lucide="package-plus" class="w-4 h-4"></i>
+                            <span>Add Item to Inventory</span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Priority Trigger & Action Card -->
+                <div class="glass-card rounded-xl p-5 border border-slate-700/40 flex-1 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-2 mb-2 text-amber-400">
+                            <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                            <h2 class="font-semibold text-white">Algorithm Execution</h2>
+                        </div>
+                        <p class="text-xs text-slate-400 leading-relaxed mb-4">
+                            Runs the sorting algorithm: Filters items with <span class="text-amber-300 font-medium">&le; 3 Days Left</span> and sorts them in ascending order of urgency.
+                        </p>
+                    </div>
+
+                    <div class="space-y-3">
+                        <button id="generateWarningBtn" 
+                            class="w-full bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 text-white font-semibold py-3 rounded-xl text-sm transition flex items-center justify-center space-x-2 shadow-lg shadow-rose-950/40">
+                            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                            <span>Generate Restock Priority Window</span>
+                        </button>
+
+                        <button id="resetDemoBtn" 
+                            class="w-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-medium py-2 rounded-lg text-xs transition border border-slate-700 flex items-center justify-center space-x-1.5">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                            <span>Reload Demo Data</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Panel: Inventory Management Table (8 Cols) -->
+            <div class="lg:col-span-8 flex flex-col glass-card rounded-xl border border-slate-700/40 overflow-hidden">
+                
+                <!-- Table Header Bar -->
+                <div class="p-4 bg-slate-900/60 border-b border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="boxes" class="w-5 h-5 text-indigo-400"></i>
+                        <h2 class="font-semibold text-white">Active Inventory Items</h2>
+                        <span id="itemCountBadge" class="bg-indigo-950/80 text-indigo-300 border border-indigo-700/50 text-xs px-2.5 py-0.5 rounded-full font-mono">0 Items</span>
+                    </div>
+
+                    <div class="flex items-center space-x-3 text-xs">
+                        <span class="flex items-center space-x-1 text-slate-400">
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
+                            <span>Critical (&le;1d)</span>
+                        </span>
+                        <span class="flex items-center space-x-1 text-slate-400">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
+                            <span>Warning (&le;3d)</span>
+                        </span>
+                        <span class="flex items-center space-x-1 text-slate-400">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                            <span>Safe (&gt;3d)</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Table Content Container -->
+                <div class="flex-1 overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900/40 border-b border-slate-800 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
+                                <th class="py-3 px-4">Item Name</th>
+                                <th class="py-3 px-4">Current Stock</th>
+                                <th class="py-3 px-4">Daily Sales Rate</th>
+                                <th class="py-3 px-4">Days Left</th>
+                                <th class="py-3 px-4 text-center">Simulate Transactions</th>
+                                <th class="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody" class="divide-y divide-slate-800/60 text-sm">
+                            <!-- Items dynamically injected here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Footer Summary Bar -->
+                <div class="p-3 bg-slate-900/80 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+                    <span id="systemStatus">System Status: Ready</span>
+                    <span class="font-mono">Formula: DaysLeft = Stock / Rate</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Priority Restock Warning Window / Modal -->
+    <div id="warningModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden transition-all duration-300">
+        <div class="glass-panel w-full max-w-2xl rounded-2xl border border-rose-500/30 shadow-2xl shadow-rose-950/50 overflow-hidden transform scale-95 transition-transform duration-300" id="modalContent">
+            
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-rose-950/80 via-slate-900 to-slate-900 px-6 py-4 border-b border-rose-900/40 flex items-center justify-between">
+                <div class="flex items-center space-x-3 text-rose-400">
+                    <div class="p-2 bg-rose-500/10 rounded-lg border border-rose-500/20">
+                        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-white">🚨 Restock Priority Warning List</h3>
+                        <p class="text-xs text-rose-300/80">Filtered (&le; 3 Days) &amp; Sorted Ascending by Urgency</p>
+                    </div>
+                </div>
+                <button id="closeModalBtn" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content List -->
+            <div class="p-6 max-h-[60vh] overflow-y-auto space-y-3" id="warningListContainer">
+                <!-- Priority items injected here -->
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                <div class="flex items-center space-x-1 text-slate-400">
+                    <i data-lucide="info" class="w-4 h-4 text-amber-400"></i>
+                    <span>Items on top require immediate stock replenishment.</span>
+                </div>
+                <button id="closeModalFooterBtn" class="bg-slate-800 hover:bg-slate-700 text-white font-medium px-4 py-2 rounded-lg text-xs transition border border-slate-700">
+                    Close Window
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 border border-slate-700 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <i id="toastIcon" data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
+        <span id="toastMessage" class="text-xs font-medium">Notification message</span>
+    </div>
+
+    <script>
+        // Inventory Data State
+        let inventory = [
+            { id: 1, name: "Coffee Beans", currentStock: 15.0, dailySalesRate: 2.5 },
+            { id: 2, name: "Milk Carton", currentStock: 4.0, dailySalesRate: 2.0 },
+            { id: 3, name: "Sugar Pack", currentStock: 2.0, dailySalesRate: 1.0 },
+            { id: 4, name: "Paper Cups", currentStock: 100.0, dailySalesRate: 10.0 }
+        ];
+
+        let nextId = 5;
+
+        // Core C++ Algorithmic Calculation Equivalent
+        function calculateDaysLeft(item) {
+            if (item.dailySalesRate <= 0) return 9999.0;
+            return item.currentStock / item.dailySalesRate;
+        }
+
+        // Render Inventory Table
+        function renderTable() {
+            const tbody = document.getElementById('inventoryTableBody');
+            tbody.innerHTML = '';
+
+            document.getElementById('itemCountBadge').textContent = `${inventory.length} Items`;
+
+            if (inventory.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-slate-500 text-xs">
+                            No items in inventory. Add a new item using the form on the left.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            inventory.forEach(item => {
+                const daysLeft = calculateDaysLeft(item);
+                
+                // Urgency badge calculation
+                let badgeHTML = '';
+                let rowBgClass = '';
+
+                if (daysLeft <= 1.0) {
+                    badgeHTML = `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded text-xs font-semibold flex items-center w-max space-x-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                        <span>${daysLeft.toFixed(1)} Days</span>
+                    </span>`;
+                    rowBgClass = 'hover:bg-rose-950/10';
+                } else if (daysLeft <= 3.0) {
+                    badgeHTML = `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-xs font-semibold flex items-center w-max space-x-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        <span>${daysLeft.toFixed(1)} Days</span>
+                    </span>`;
+                    rowBgClass = 'hover:bg-amber-950/10';
+                } else {
+                    const daysDisplay = daysLeft >= 999 ? '∞' : daysLeft.toFixed(1);
+                    badgeHTML = `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-xs font-semibold flex items-center w-max space-x-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <span>${daysDisplay} Days</span>
+                    </span>`;
+                    rowBgClass = 'hover:bg-slate-800/40';
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = `transition border-b border-slate-800/40 ${rowBgClass}`;
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-medium text-slate-200">${escapeHTML(item.name)}</td>
+                    <td class="py-3 px-4 text-slate-300 font-mono">${item.currentStock.toFixed(1)}</td>
+                    <td class="py-3 px-4 text-slate-300 font-mono">${item.dailySalesRate.toFixed(1)}/day</td>
+                    <td class="py-3 px-4">${badgeHTML}</td>
+                    <td class="py-3 px-4">
+                        <div class="flex items-center justify-center space-x-1.5">
+                            <button onclick="simulateSale(${item.id}, 1)" title="Simulate 1 Sale"
+                                class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-2 py-1 rounded border border-slate-700 text-xs transition flex items-center space-x-1">
+                                <i data-lucide="minus" class="w-3 h-3 text-rose-400"></i>
+                                <span>Sell 1</span>
+                            </button>
+                            <button onclick="simulateRestock(${item.id}, 5)" title="Add +5 Stock"
+                                class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-2 py-1 rounded border border-slate-700 text-xs transition flex items-center space-x-1">
+                                <i data-lucide="plus" class="w-3 h-3 text-emerald-400"></i>
+                                <span>+5 Stock</span>
+                            </button>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="deleteItem(${item.id})" class="text-slate-500 hover:text-rose-400 p-1 rounded hover:bg-slate-800 transition" title="Delete Item">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            lucide.createIcons();
+        }
+
+        // Add New Item Handler
+        document.getElementById('addItemForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('itemName').value.trim();
+            const stock = parseFloat(document.getElementById('currentStock').value);
+            const rate = parseFloat(document.getElementById('salesRate').value);
+
+            if (name && !isNaN(stock) && !isNaN(rate)) {
+                inventory.push({
+                    id: nextId++,
+                    name: name,
+                    currentStock: stock,
+                    dailySalesRate: rate
+                });
+
+                document.getElementById('itemName').value = '';
+                document.getElementById('currentStock').value = '';
+                document.getElementById('salesRate').value = '';
+
+                renderTable();
+                showToast(`Added "${name}" to inventory`, 'check-circle', 'text-emerald-400');
+            }
+        });
+
+        // Simulate Sale
+        function simulateSale(id, amount) {
+            const item = inventory.find(i => i.id === id);
+            if (item) {
+                item.currentStock = Math.max(0, item.currentStock - amount);
+                renderTable();
+                showToast(`Sold 1 unit of ${item.name}`, 'shopping-cart', 'text-amber-400');
+            }
+        }
+
+        // Simulate Restock
+        function simulateRestock(id, amount) {
+            const item = inventory.find(i => i.id === id);
+            if (item) {
+                item.currentStock += amount;
+                renderTable();
+                showToast(`Restocked +${amount} for ${item.name}`, 'package-check', 'text-emerald-400');
+            }
+        }
+
+        // Delete Item
+        function deleteItem(id) {
+            const item = inventory.find(i => i.id === id);
+            inventory = inventory.filter(i => i.id !== id);
+            renderTable();
+            if (item) {
+                showToast(`Removed "${item.name}"`, 'trash-2', 'text-rose-400');
+            }
+        }
+
+        // Generate Warning Priority List (Matching C++ Algorithm Logic)
+        document.getElementById('generateWarningBtn').addEventListener('click', function() {
+            // Step 1: Filter Dayleft <= 3 days
+            let warningList = inventory.filter(item => calculateDaysLeft(item) <= 3.0);
+
+            // Step 2 & 3: Ascending Order Sorting by Days Left
+            warningList.sort((a, b) => calculateDaysLeft(a) - calculateDaysLeft(b));
+
+            const container = document.getElementById('warningListContainer');
+            container.innerHTML = '';
+
+            if (warningList.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 glass-card rounded-xl border border-emerald-500/20 p-6">
+                        <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-3"></i>
+                        <h4 class="text-base font-semibold text-white">All Items Sufficiently Stocked</h4>
+                        <p class="text-xs text-slate-400 mt-1">There are no items running low within 3 days (&le; 3 Days Left).</p>
+                    </div>
+                `;
+            } else {
+                warningList.forEach((item, index) => {
+                    const daysLeft = calculateDaysLeft(item);
+                    const isCritical = daysLeft <= 1.0;
+                    
+                    const borderClass = isCritical ? 'border-rose-500/40 bg-rose-950/20' : 'border-amber-500/40 bg-amber-950/20';
+                    const textClass = isCritical ? 'text-rose-400' : 'text-amber-400';
+                    const badgeText = isCritical ? '🚨 CRITICAL (<= 1 Day)' : '⚠️ WARNING (<= 3 Days)';
+
+                    const itemCard = document.createElement('div');
+                    itemCard.className = `glass-card p-4 rounded-xl border ${borderClass} flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4`;
+                    itemCard.innerHTML = `
+                        <div class="flex items-start space-x-3">
+                            <span class="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold font-mono text-slate-300">
+                                #${index + 1}
+                            </span>
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <h4 class="font-bold text-white text-base">${escapeHTML(item.name)}</h4>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${isCritical ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}">
+                                        ${badgeText}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-slate-400 mt-1 flex space-x-4">
+                                    <span>Stock: <strong class="text-slate-200 font-mono">${item.currentStock.toFixed(1)}</strong></span>
+                                    <span>Rate: <strong class="text-slate-200 font-mono">${item.dailySalesRate.toFixed(1)}/day</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800">
+                            <span class="text-xs text-slate-400">Remaining Time</span>
+                            <span class="text-lg font-extrabold ${textClass} font-mono">
+                                ${daysLeft.toFixed(1)} <span class="text-xs font-normal">Days</span>
+                            </span>
+                        </div>
+                    `;
+                    container.appendChild(itemCard);
+                });
+            }
+
+            lucide.createIcons();
+            openModal();
+        });
+
+        // Demo Data Reload
+        document.getElementById('resetDemoBtn').addEventListener('click', function() {
+            inventory = [
+                { id: 1, name: "Coffee Beans", currentStock: 15.0, dailySalesRate: 2.5 },
+                { id: 2, name: "Milk Carton", currentStock: 4.0, dailySalesRate: 2.0 },
+                { id: 3, name: "Sugar Pack", currentStock: 2.0, dailySalesRate: 1.0 },
+                { id: 4, name: "Paper Cups", currentStock: 100.0, dailySalesRate: 10.0 }
+            ];
+            renderTable();
+            showToast("Reset to sample demo items", "rotate-ccw", "text-indigo-400");
+        });
+
+        // Modal Controls
+        function openModal() {
+            const modal = document.getElementById('warningModal');
+            const content = document.getElementById('modalContent');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('warningModal');
+            const content = document.getElementById('modalContent');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
+        document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+        document.getElementById('closeModalFooterBtn').addEventListener('click', closeModal);
+        document.getElementById('warningModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // Toast Notification Helper
+        function showToast(message, iconName = 'check-circle', iconColor = 'text-emerald-400') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.textContent = message;
+            toastIcon.setAttribute('data-lucide', iconName);
+            toastIcon.className = `w-5 h-5 ${iconColor}`;
+            lucide.createIcons();
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Helper: Escape HTML to prevent XSS
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
+        // Initial Initialization
+        window.onload = function() {
+            renderTable();
+            lucide.createIcons();
+        };
+    </script>
+</body>
+</html>
